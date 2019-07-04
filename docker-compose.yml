@@ -1,0 +1,44 @@
+version: '3.1'
+
+networks:
+  redmine-network:
+
+volumes:
+  redmine-plugins:
+  redmine-themes:
+  redmine-data:
+
+services:
+  mysql-for-redmine:
+    image: mysql:5.7
+    networks:
+      - redmine-network
+    volumes:
+      # Consider using separate volume containers
+      # instead of host directory mounts.
+      - /my/custom:/etc/mysql/conf.d
+      - /storage/mysql/datadir:/var/lib/mysql
+    environment:
+      # Set database root password
+      MYSQL_ROOT_PASSWORD: "#PASSWORD#"
+      MYSQL_DATABASE:      "redmine"
+
+  redmine:
+    image: redmine:4.0.4-passenger
+    ports:
+      - 80:3000
+    networks:
+      - redmine-network
+    volumes:
+      - redmine-plugins:/usr/src/redmine/plugins
+      - redmine-themes:/usr/src/redmine/public/themes
+      - redmine-data:/usr/src/redmine/files
+    environment:
+      # Host name matches the MySQL container name.
+      REDMINE_DB_MYSQL:        "mysql-for-redmine"
+      REDMINE_DB_USERNAME:     "root"
+      # Set database password
+      REDMINE_DB_PASSWORD:     "#PASSWORD#"
+      # Set secret key base password (optional)
+      REDMINE_SECRET_KEY_BASE: "..."
+    restart: always
